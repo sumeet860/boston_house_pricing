@@ -1,4 +1,3 @@
-
 import json
 import pickle
 from flask import Flask, request, app, jsonify, url_for, render_template
@@ -9,7 +8,7 @@ app = Flask(__name__)
 
 ## Loading the model
 model = pickle.load(open('regmodel.pkl', 'rb'))
-scaler = pickle.load(open('scaling.pkl', 'rb'))
+scalar = pickle.load(open('scaling.pkl', 'rb'))
 
 @app.route('/')
 def home():
@@ -23,14 +22,22 @@ def predict_api():
     print(data)
     # converting the data values in array and list and reshaping it to form a matrix
     print(np.array(list(data.values())).reshape(1,-1))
-    # transforming the data and storing in new_data using standard scaler
-    new_data=scaler.transform(np.array(list(data.values())).reshape(1,-1))
+    # transforming the data and storing in new_data using standard scalar
+    new_data=scalar.transform(np.array(list(data.values())).reshape(1,-1))
     # predicting the whole data and saving in output
     output = model.predict(new_data)
     # printing the first data
     print(output[0])
     return jsonify(output[0])
 
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Getting data in form type from user
+    data = [float(x) for x in request.form.values()]
+    final_input = scalar.transform(np.array(data).reshape(1,-1))
+    print(final_input)
+    output = model.predict(final_input)[0]
+    return render_template("home.html", prediction_text = "The House price prediction is {}".format(output))
 
 if __name__ == "__main__":
     app.run(debug=True)
